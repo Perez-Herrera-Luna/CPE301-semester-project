@@ -101,3 +101,15 @@ void write_pb(unsigned char pin_num, unsigned char state)
     *port_b |= 0x01 << pin_num;
   }
 }
+
+/*
+* Sets the specififed pin to either input or output
+* @param data_register_port - The Data Direction register of the desired port
+* @param pin_num - The pin number of the port that you wish to modify
+* @param mode - INPUT or OUTPUT
+*/
+void set_pin_direction(unsigned char* data_register_port, unsigned char pin_num, uint8_t mode)
+{
+  if(mode == OUTPUT) *data_register_port |= 0x01 << pin_num;
+  else if(mode == INPUT) *data_register_port &= ~(0x01 << pin_num);
+}
