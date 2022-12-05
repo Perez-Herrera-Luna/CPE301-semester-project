@@ -29,6 +29,13 @@ unsigned int ticks[8] = {18182,16194,15296,13629,12140,11461,10204,0};
 unsigned int tickCount = 0;
 bool timerIsRunning = false;
 
+unsigned int systemState = 0;
+// 0 = off
+// 1 = Running
+// 2 = Idle
+// 3 = Disabled
+// 4 = Error
+
 void setup() 
 {
   U0init(9600); // initialize the serial port on USART0:
