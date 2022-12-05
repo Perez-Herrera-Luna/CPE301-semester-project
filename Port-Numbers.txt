@@ -1,0 +1,9 @@
+Stepper Button Pins:
+PA0 - Pin22
+PA1 - Pin23
+Stepper Motor Pins:
+PA2 - Pin24
+PA3 - Pin25
+PA4 - Pin26
+PA5 - Pin27
+PA6 - Pin28
