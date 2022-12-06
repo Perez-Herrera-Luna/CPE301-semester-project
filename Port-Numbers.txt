@@ -7,3 +7,6 @@ PA3 - Pin25
 PA4 - Pin26
 PA5 - Pin27
 PA6 - Pin28
+I2C (Clock) Pins:
+SDA - Pin20
+SCL - Pin21
