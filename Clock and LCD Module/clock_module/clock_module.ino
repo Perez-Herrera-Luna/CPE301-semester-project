@@ -32,7 +32,7 @@ void loop() {
 
   Serial.print(" (");
   Serial.print(daysOfTheWeek[rtc.dayOfWeek()-1]);
-   Serial.print(") ");
+  Serial.print(") ");
 
   Serial.print(rtc.hour());
   Serial.print(':');
@@ -50,7 +50,7 @@ void loop() {
 // Define getTime() function
 // No arguments
 // Return current date and time as string
- char* getTime(char* dateString) {
+char* getTime(char* dateString) {
   // = "" + (rtc.hour() % 12) + ":" + rtc.minute() + "(AM/PM)" + ", " + rtc.month() + "/" + rtc.day() + "/" + rtc.year();
   uint8_t hourInt = rtc.hour();
   char hour = (char *) hourInt;
