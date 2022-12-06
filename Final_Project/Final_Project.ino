@@ -29,6 +29,13 @@ unsigned int ticks[8] = {18182,16194,15296,13629,12140,11461,10204,0};
 unsigned int tickCount = 0;
 bool timerIsRunning = false;
 
+unsigned int systemState = 0;
+// 0 = off
+// 1 = Running
+// 2 = Idle
+// 3 = Disabled
+// 4 = Error
+
 void setup() 
 {
   U0init(9600); // initialize the serial port on USART0:
@@ -100,4 +107,28 @@ void write_pb(unsigned char pin_num, unsigned char state)
   {
     *port_b |= 0x01 << pin_num;
   }
+}
+
+/*
+* Sets the specififed pin to either input or output
+* @param data_direction_register - The Data Direction Register of the desired port
+* @param pin_num - The pin number of the port that you wish to modify
+* @param mode - INPUT or OUTPUT
+*/
+void set_pin_direction(unsigned char* data_direction_register, unsigned char pin_num, uint8_t mode)
+{
+  if(mode == OUTPUT) *data_direction_register |= 0x01 << pin_num;
+  else if(mode == INPUT) *data_direction_register &= ~(0x01 << pin_num);
+}
+
+/*
+* Write a HIGH or LOW value to a digital pin
+* @param data_register - The Data Register of the desired port
+* @param pin_num - The pin number of the port that you wish to modify
+* @param mode - LOW or HIGH
+*/
+void write_to_pin(unsigned char* data_register, unsigned char pin_num, uint8_t state)
+{
+  if(state == LOW) *data_register &= ~(0x01 << pin_num);
+  else if(state == HIGH) *data_register |= 0x01 << pin_num;
 }
