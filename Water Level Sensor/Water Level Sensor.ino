@@ -1,6 +1,6 @@
 // Sensor pins
 #define sensorPower 4
-#define sensorPin 0
+#define sensorPin 2
 
 // ADC Registers
 volatile unsigned char* my_ADMUX = (unsigned char*) 0x7C;
@@ -70,7 +70,8 @@ void write_to_pin(unsigned char* data_register, unsigned char pin_num, uint8_t s
 unsigned int readSensor() {
   write_to_pin(port_h, sensorPower, HIGH); // Turn the sensor ON
 	delay(10);							// wait 10 milliseconds
-  waterValue = adc_read(sensorPin); // Read the analog value form sensor
+  waterValue = adc_read(3); // Read the analog value form sensor
+  //waterValue = analogRead(A0);
   write_to_pin(port_h, sensorPower, LOW); // Turn the sensor OFF
 	return waterValue;							// send current reading
 }
@@ -107,7 +108,9 @@ unsigned int adc_read(unsigned char adc_channel_num)
     *my_ADCSRB |= 0b00001000;
   }
   // set the channel selection bits
-  *my_ADMUX  += adc_channel_num;
+  *my_ADMUX += adc_channel_num;
+  //*my_ADMUX |= 0b00000011; // ADC3
+  //*my_ADMUX &= 0b11100010;
   // set bit 6 of ADCSRA to 1 to start a conversion
   *my_ADCSRA |= 0x40;
   // wait for the conversion to complete
