@@ -9,3 +9,6 @@ PA5 - Pin27
 I2C (Clock) Pins:
 SDA - Pin20
 SCL - Pin21
+Water Level Sensor Pins:
+PF3 - PinA3
+PH4 - Pin07
