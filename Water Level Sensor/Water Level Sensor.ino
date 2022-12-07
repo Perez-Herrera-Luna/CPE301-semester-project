@@ -71,7 +71,8 @@ unsigned int readSensor() {
   write_to_pin(port_h, sensorPower, HIGH); // Turn the sensor ON
 	delay(10);							// wait 10 milliseconds
   waterValue = adc_read(3); // Read the analog value form sensor
-  //waterValue = analogRead(A0);
+  // 3 should probably be replaced with sensorPin but not neccessary
+  // Whenever I read on an analog port that isn't A0 (such as A3) the lowest value for waterValue ends up being 7 instead of the epexected 0. This can proably be worked around but to fix I'd proably have to chnage something witha  register.
   write_to_pin(port_h, sensorPower, LOW); // Turn the sensor OFF
 	return waterValue;							// send current reading
 }
@@ -109,8 +110,6 @@ unsigned int adc_read(unsigned char adc_channel_num)
   }
   // set the channel selection bits
   *my_ADMUX += adc_channel_num;
-  //*my_ADMUX |= 0b00000011; // ADC3
-  //*my_ADMUX &= 0b11100010;
   // set bit 6 of ADCSRA to 1 to start a conversion
   *my_ADCSRA |= 0x40;
   // wait for the conversion to complete
