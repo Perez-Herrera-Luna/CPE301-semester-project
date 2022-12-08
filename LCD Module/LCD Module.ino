@@ -1,6 +1,6 @@
 #include <LiquidCrystal.h>
 // "Borrowed" this code from an online guide. I will use it to test the LCD module and then fully modify for our needs later.
-
+// Obivously this file itself won't end up being used in the final project, but some form of it will make it way into the final project where it will be combined with the other modules.
 
 // initialize the library by associating any needed LCD interface pin
 
