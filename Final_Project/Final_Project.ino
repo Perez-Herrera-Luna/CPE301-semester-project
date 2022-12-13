@@ -47,11 +47,6 @@ void loop()
 
 void U0init(unsigned long U0baud)
 {
-//  Students are responsible for understanding
-//  this initialization code for the ATmega2560 USART0
-//  and will be expected to be able to intialize
-//  the USART in differrent modes.
-//
  unsigned long FCPU = 16000000;
  unsigned int tbaud;
  tbaud = (FCPU / 16 / U0baud - 1);
