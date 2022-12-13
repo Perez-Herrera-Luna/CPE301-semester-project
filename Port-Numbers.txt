@@ -6,6 +6,8 @@ PA2 - Pin24
 PA3 - Pin25
 PA4 - Pin26
 PA5 - Pin27
+Fan Pins:
+PB6 - Pin12
 I2C (Clock) Pins:
 SDA - Pin20
 SCL - Pin21
