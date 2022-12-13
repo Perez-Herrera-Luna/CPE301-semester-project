@@ -53,8 +53,8 @@ bool tester = false;
 void setup() 
 {
   lcd.begin(16, 2); // This line is neccessary, do not change
-  lcd.print("testing"); // This can be changed
-
+  // This can be changed
+  //lcd.print("testing");
   // Water Level Sensor setup
   set_pin_direction(ddr_h, waterSensorPower, OUTPUT); // Set H4 as an OUTPUT
   write_to_pin(port_h, waterSensorPower, LOW); // Set to LOW so no power flows through the sensor
@@ -76,11 +76,14 @@ void loop()
   Serial.print("Previous-Water level: ");
 	Serial.println(previousWaterValue);
 	
-	delay(1000);
+	
+  //lcd.setCursor(0, 0);
+  lcd.print("testing");
   lcd.setCursor(0, 1); // set the cursor to column 0, line 1
   lcd.print("WL: ");
   lcd.print(waterLevel); // print the water level
-  //lcd.clear();
+  delay(100);
+  lcd.clear();
 }
 
 void U0init(unsigned long U0baud)
