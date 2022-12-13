@@ -1,6 +1,6 @@
 // Sensor pins
-#define sensorPower 4
-#define sensorPin 2
+#define waterSensorPower 4
+#define waterSensorPin 3
 
 // ADC Registers
 volatile unsigned char* my_ADMUX = (unsigned char*) 0x7C;
@@ -18,11 +18,11 @@ unsigned int waterValue = 0;
 
 void setup() {
   // Set H4 as an OUTPUT
-  set_pin_direction(ddr_h, sensorPower, OUTPUT);
+  set_pin_direction(ddr_h, waterSensorPower, OUTPUT);
 	
 	// Set to LOW so no power flows through the sensor
   //write_ph(4, 0);
-  write_to_pin(port_h, sensorPower, LOW);
+  write_to_pin(port_h, waterSensorPower, LOW);
 
   // setup the ADC
   adc_init();
@@ -68,12 +68,12 @@ void write_to_pin(unsigned char* data_register, unsigned char pin_num, uint8_t s
 * Function that gets a reading from the water level sensor
 */
 unsigned int readSensor() {
-  write_to_pin(port_h, sensorPower, HIGH); // Turn the sensor ON
+  write_to_pin(port_h, waterSensorPower, HIGH); // Turn the sensor ON
 	delay(10);							// wait 10 milliseconds
   waterValue = adc_read(3); // Read the analog value form sensor
-  // 3 should probably be replaced with sensorPin but not neccessary
+  // 3 should probably be replaced with waterSensorPin but not neccessary
   // Whenever I read on an analog port that isn't A0 (such as A3) the lowest value for waterValue ends up being 7 instead of the epexected 0. This can proably be worked around but to fix I'd proably have to chnage something witha  register.
-  write_to_pin(port_h, sensorPower, LOW); // Turn the sensor OFF
+  write_to_pin(port_h, waterSensorPower, LOW); // Turn the sensor OFF
 	return waterValue;							// send current reading
 }
 
