@@ -12,3 +12,10 @@ SCL - Pin21
 Water Level Sensor Pins:
 PF3 - PinA3
 PH4 - Pin07
+LCD Module Pins:
+PL1 - Pin48
+PL0 - Pin49
+PD7 - Pin50
+PB2 - Pin51
+PG1 - Pin52
+PB0 - Pin53
