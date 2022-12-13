@@ -62,19 +62,20 @@ void setup()
 }
 void loop() 
 {
-	//get the reading from the function below and print it
-	// unsigned int waterLevel = readSensor();
-  // This is turned off for now for testing but make sure to turn this back on when done
 	
-	Serial.print("Water level: ");
-	Serial.println(waterValue);
-	
+  
+	/*
+  // unsigned int waterLevel = readSensor(); // This is turned off for now for testing but make sure to turn this back on when done
+  //Serial.print("Water level: ");
+	//Serial.println(waterValue);
+
   lcd.print("testing");
   lcd.setCursor(0, 1); // set the cursor to column 0, line 1
   lcd.print("WL: ");
   lcd.print(waterLevel); // print the water level
   delay(100);
   lcd.clear();
+  */
 }
 
 void U0init(unsigned long U0baud)
@@ -82,7 +83,6 @@ void U0init(unsigned long U0baud)
  unsigned long FCPU = 16000000;
  unsigned int tbaud;
  tbaud = (FCPU / 16 / U0baud - 1);
- // Same as (FCPU / (16 * U0baud)) - 1;
  *myUCSR0A = 0x20;
  *myUCSR0B = 0x18;
  *myUCSR0C = 0x06;
