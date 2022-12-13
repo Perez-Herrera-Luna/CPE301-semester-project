@@ -47,8 +47,6 @@ unsigned int systemState = 0;
 // 3 = Disabled
 // 4 = Error
 unsigned int waterValue = 0; // Value for storing water level
-unsigned int previousWaterValue = waterValue;
-bool tester = false;
 
 void setup() 
 {
@@ -65,19 +63,12 @@ void setup()
 void loop() 
 {
 	//get the reading from the function below and print it
-	unsigned int waterLevel = readSensor();
-  if(previousWaterValue != waterValue)
-  {
-    previousWaterValue = waterValue;
-  }
+	// unsigned int waterLevel = readSensor();
+  // This is turned off for now for testing but make sure to turn this back on when done
 	
 	Serial.print("Water level: ");
 	Serial.println(waterValue);
-  Serial.print("Previous-Water level: ");
-	Serial.println(previousWaterValue);
 	
-	
-  //lcd.setCursor(0, 0);
   lcd.print("testing");
   lcd.setCursor(0, 1); // set the cursor to column 0, line 1
   lcd.print("WL: ");
