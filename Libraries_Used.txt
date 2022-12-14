@@ -1,4 +1,6 @@
 Stepper:
-stepper.h version 1.1.3
+- stepper.h v1.1.3
 Clock:
-uRTCLib v6.6.0
+- uRTCLib v6.6.0
+LCD Display
+- LiquidCrystal.h v1.0.7 (LiquidCrystal Library for Arduino)

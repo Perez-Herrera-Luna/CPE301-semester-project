@@ -1,6 +1,12 @@
 // Sensor pins
-#define sensorPower 7
-#define sensorPin A0
+#define waterSensorPower 4
+#define waterSensorPin 3
+
+// ADC Registers
+volatile unsigned char* my_ADMUX = (unsigned char*) 0x7C;
+volatile unsigned char* my_ADCSRB = (unsigned char*) 0x7B;
+volatile unsigned char* my_ADCSRA = (unsigned char*) 0x7A;
+volatile unsigned int* my_ADC_DATA = (unsigned int*) 0x78;
 
 // Port H Register Pointers
 unsigned char* port_h = (unsigned char*) 0x102; // Port H Data Register
@@ -8,22 +14,25 @@ unsigned char* ddr_h  = (unsigned char*) 0x101; // Port H Data Direction Registe
 unsigned char* pin_h  = (unsigned char*) 0x100; // Port H Input Pins Address
 
 // Value for storing water level
-int waterValue = 0;
+unsigned int waterValue = 0;
 
 void setup() {
   // Set H4 as an OUTPUT
-  set_pin_direction(ddr_h, 4, OUTPUT);
+  set_pin_direction(ddr_h, waterSensorPower, OUTPUT);
 	
 	// Set to LOW so no power flows through the sensor
   //write_ph(4, 0);
-  write_to_pin(port_h, 4, LOW);
+  write_to_pin(port_h, waterSensorPower, LOW);
+
+  // setup the ADC
+  adc_init();
 	
 	Serial.begin(9600);
 }
 
 void loop() {
 	//get the reading from the function below and print it
-	int waterLevel = readSensor();
+	unsigned int waterLevel = readSensor();
 	
 	Serial.print("Water level: ");
 	Serial.println(waterLevel);
@@ -58,10 +67,53 @@ void write_to_pin(unsigned char* data_register, unsigned char pin_num, uint8_t s
 /*
 * Function that gets a reading from the water level sensor
 */
-int readSensor() {
-  write_to_pin(port_h, 4, HIGH); // Turn the sensor ON
+unsigned int readSensor() {
+  write_to_pin(port_h, waterSensorPower, HIGH); // Turn the sensor ON
 	delay(10);							// wait 10 milliseconds
-	waterValue = analogRead(sensorPin);		// Read the analog value form sensor
-  write_to_pin(port_h, 4, LOW); // Turn the sensor OFF
+  waterValue = adc_read(3); // Read the analog value form sensor
+  // 3 should probably be replaced with waterSensorPin but not neccessary
+  // Whenever I read on an analog port that isn't A0 (such as A3) the lowest value for waterValue ends up being 7 instead of the epexected 0. This can proably be worked around but to fix I'd proably have to chnage something witha  register.
+  write_to_pin(port_h, waterSensorPower, LOW); // Turn the sensor OFF
 	return waterValue;							// send current reading
+}
+
+void adc_init()
+{
+  // setup the A register
+  *my_ADCSRA |= 0b10000000; // set bit   7 to 1 to enable the ADC                              1000 0000
+  *my_ADCSRA &= 0b11011111; // clear bit 6 to 0 to disable the ADC trigger mode                0100 0000
+  *my_ADCSRA &= 0b11110111; // clear bit 5 to 0 to disable the ADC interrupt                   0010 0000
+  *my_ADCSRA &= 0b11111000; // clear bit 0-2 to 0 to set prescaler selection to slow reading   0000 0111
+  // setup the B register
+  *my_ADCSRB &= 0b11110111; // clear bit 3 to 0 to reset the channel and gain bits             0000 1000
+  *my_ADCSRB &= 0b11111000; // clear bit 2-0 to 0 to set free running mode                     0000 0111
+  // setup the MUX Register
+  *my_ADMUX  &= 0b01111111; // clear bit 7 to 0 for AVCC analog reference                      1000 0000
+  *my_ADMUX  |= 0b01000000; // set bit   6 to 1 for AVCC analog reference                      0100 0000
+  *my_ADMUX  &= 0b11011111; // clear bit 5 to 0 for right adjust result                        0010 0000
+  *my_ADMUX  &= 0b11100000; // clear bit 4-0 to 0 to reset the channel and gain bits           0001 1111
+}
+
+unsigned int adc_read(unsigned char adc_channel_num)
+{
+  // clear the channel selection bits (MUX 4:0)                                               0001 1111
+  *my_ADMUX  &= 0b11100000;
+  // clear the channel selection bits (MUX 5)                                                 0001 0000
+  *my_ADCSRB &= 0b11110111;
+  // set the channel number
+  if(adc_channel_num > 7)
+  {
+    // set the channel selection bits, but remove the most significant bit (bit 3)
+    adc_channel_num -= 8;
+    // set MUX bit 5                                                                          0010 0000
+    *my_ADCSRB |= 0b00001000;
+  }
+  // set the channel selection bits
+  *my_ADMUX += adc_channel_num;
+  // set bit 6 of ADCSRA to 1 to start a conversion
+  *my_ADCSRA |= 0x40;
+  // wait for the conversion to complete
+  while((*my_ADCSRA & 0x40) != 0);
+  // return the result in the ADC data register
+  return *my_ADC_DATA;
 }
