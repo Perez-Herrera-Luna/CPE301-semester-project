@@ -12,3 +12,4 @@ The pertinent files for submission are:
     - "Video Submission.mp4" (Video of the system in operation)
     - Various photos of the swamp cooler
 - "Schematic_Diagram.png" (A schematic of the machine)
+- "Project Overview.pdf" (Document containg information about the project)
