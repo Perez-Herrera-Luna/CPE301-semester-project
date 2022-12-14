@@ -8,7 +8,7 @@ PA4 - Pin26
 PA5 - Pin27
 Fan Pins:
 PB6 - Pin12
-I2C (Clock) Pins:
+Real Time Clock (I2C) Pins:
 SDA - Pin20
 SCL - Pin21
 Water Level Sensor Pins:
