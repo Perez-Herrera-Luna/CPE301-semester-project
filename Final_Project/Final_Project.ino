@@ -85,7 +85,7 @@ unsigned int systemState = 0;
 // 2 = Runnng
 // 3 = Error
 unsigned int waterValue = 0; // Value for storing water level
-float tempThreshold = 75f;
+float tempThreshold = 75;
 unsigned int waterLevelThreshold = 100;
 boolean stateTransition = false;
 
@@ -112,17 +112,18 @@ void setup()
   dht.begin();
 
   
-  set_pin_direction(ddr_g, 2, OUTPUT); // Set H4 as an OUTPUT
+  set_pin_direction(ddr_g, 2, OUTPUT);
   set_pin_direction(ddr_l, 5, OUTPUT);
   set_pin_direction(ddr_l, 6, OUTPUT);
   set_pin_direction(ddr_l, 7, OUTPUT);
-  write_to_pin(port_g, 2, HIGH); // Set to LOW so no power flows through the sensor
+  write_to_pin(port_g, 2, HIGH); // 39, Yellow
 }
 void loop() 
 {
   delay(1000);
+  lcd.clear();
 
-  if(Serial.parseInt()=='1') systemState = 1;
+  
   if(Serial.parseInt()=='0') systemState = 0;
 
   if(!stateTransition)
@@ -130,28 +131,64 @@ void loop()
     Serial.print("State Changed to: ");
     Serial.print(systemState);
     Serial.println(getTime());
-    stateTransition = True;
+    stateTransition = true;
   }
 
-  if(systemState == 1)
+  if(systemState == 0) // Off
   {
-    stateTransition = false;
-    if(waterLevel < waterLevelThreshold) systemState = 3; // Error
-    if(dht.readTemperature(true) > tempThreshold) systemState == 2; // Running
+    lcd.print("Error");
+    write_to_pin(port_g, 2, HIGH);
+    write_to_pin(port_g, 0, LOW);
+    write_to_pin(port_g, 1, LOW);
+    write_to_pin(port_l, 7, LOW);
+    if(Serial.parseInt()=='1'){
+      systemState = 1;  
+      stateTransition = false;
+    }
+    //stateTransition = false;
+  }
+  if(systemState == 1) // Idle
+  {
+    //stateTransition = false;
+    write_to_pin(port_g, 2, LOW);
+    write_to_pin(port_g, 0, HIGH);
+    write_to_pin(port_g, 1, LOW);
+    write_to_pin(port_l, 7, LOW);
+    if(waterValue < waterLevelThreshold){
+      systemState = 3; // Error
+      stateTransition = false;
+    }
+    if(dht.readTemperature(true) > tempThreshold){
+      systemState == 2; // Running
+      stateTransition = false;
+    }
   }
   if(systemState == 3) // Running
   {
-    stateTransition = false;
-    if(waterLevel < waterLevelThreshold) systemState = 3; // Error
-    if(dht.readTemperature(true) <= tempThreshold) systemState == 1; // Idle
+    
+    write_to_pin(port_g, 2, LOW);
+    write_to_pin(port_g, 0, LOW);
+    write_to_pin(port_g, 1, HIGH);
+    write_to_pin(port_l, 7, LOW);
+    if(waterValue < waterLevelThreshold){
+      systemState = 3; // Error
+      stateTransition = false;
+    }
+    if(dht.readTemperature(true) <= tempThreshold){
+      systemState == 1; // Idle
+      stateTransition = false;
+    }
   }
   if(systemState == 4) // Error
   {
-    stateTransition = false;
+    
+    write_to_pin(port_g, 2, LOW);
+    write_to_pin(port_g, 0, LOW);
+    write_to_pin(port_g, 1, LOW);
     write_to_pin(port_l, 7, HIGH);
     if(waterValue > waterLevelThreshold)
     {
-
+      stateTransition = false;
     }
 
   }
@@ -168,14 +205,19 @@ void loop()
   unsigned int waterLevel = readSensor(); // This is turned off for now for testing but make sure to turn this back on when done
   //Serial.print("Water level: ");
 	//Serial.println(waterValue);
-  /*
-  lcd.print("testing");
-  lcd.setCursor(0, 1); // set the cursor to column 0, line 1
-  lcd.print("WL: ");
-  lcd.print(waterLevel); // print the water level
-  delay(100);
-  lcd.clear();
-  */
+  if(systemState == 1 || systemState == 2)
+  {
+    lcd.setCursor(0, 0);
+    lcd.print("Hum: ");
+    lcd.print(dht.readHumidity());
+    lcd.setCursor(0, 1); // set the cursor to column 0, line 1
+    lcd.print("Temp: ");
+    lcd.print(dht.readTemperature(true));
+    lcd.print("F");
+    delay(100);
+  }
+  
+
 }
 
 void U0init(unsigned long U0baud)
