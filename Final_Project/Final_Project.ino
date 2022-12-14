@@ -79,7 +79,7 @@ unsigned int ticks= ((1.0/100.0)/2.0)/clk_period; //fan shouldn't go too fast, s
 unsigned long currentTicks=0; //global ticks counter
 unsigned int timer_running=1;
 
-unsigned int systemState = 2;
+unsigned int systemState = 3;
 // 0 = off
 // 1 = Idle
 // 2 = Runnng
