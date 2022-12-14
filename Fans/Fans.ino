@@ -8,8 +8,8 @@ volatile unsigned char *myUCSR0C = (unsigned char *)0x00C2;
 volatile unsigned int  *myUBRR0  = (unsigned int *) 0x00C4;
 volatile unsigned char *myUDR0   = (unsigned char *)0x00C6;
 // GPIO Pointers
-volatile unsigned char *portB     = 0x25; //PB6 is pin 12
-volatile unsigned char *portDDRB  = 0x24;
+volatile unsigned char *portB     = (unsigned char *) 0x25; //PB6 is pin 12
+volatile unsigned char *portDDRB  = (unsigned char *) 0x24;
 // Timer Pointers
 volatile unsigned char *myTCCR1A = (unsigned char *) 0x80;
 volatile unsigned char *myTCCR1B = (unsigned char *) 0x81;
