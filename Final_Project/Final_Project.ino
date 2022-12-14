@@ -15,8 +15,8 @@ volatile unsigned char *myTIMSK1 = (unsigned char *) 0x6F;
 volatile unsigned int  *myTCNT1  = (unsigned  int *) 0x84;
 volatile unsigned char *myTIFR1 =  (unsigned char *) 0x36;
 // GPIO Pointers
-volatile unsigned char *portDDRB = (unsigned char *) 0x24;
-volatile unsigned char *portB =    (unsigned char *) 0x25;
+unsigned char *portDDRB = (unsigned char *) 0x24;
+unsigned char *portB =    (unsigned char *) 0x25;
 // UART Pointers
 volatile unsigned char *myUCSR0A = (unsigned char *)0x00C0;
 volatile unsigned char *myUCSR0B = (unsigned char *)0x00C1; //
@@ -24,9 +24,9 @@ volatile unsigned char *myUCSR0C = (unsigned char *)0x00C2;
 volatile unsigned int  *myUBRR0  = (unsigned int *) 0x00C4; // Baud Rate Registers
 volatile unsigned char *myUDR0   = (unsigned char *)0x00C6; // Data Register
 // Define Port B Register Pointers
-volatile unsigned char* port_b = (unsigned char*) 0x25; 
-volatile unsigned char* ddr_b  = (unsigned char*) 0x24; 
-volatile unsigned char* pin_b  = (unsigned char*) 0x23;
+unsigned char* port_b = (unsigned char*) 0x25; 
+unsigned char* ddr_b  = (unsigned char*) 0x24; 
+unsigned char* pin_b  = (unsigned char*) 0x23;
 // ADC Registers
 volatile unsigned char* my_ADMUX = (unsigned char*) 0x7C;
 volatile unsigned char* my_ADCSRB = (unsigned char*) 0x7B;
@@ -54,8 +54,10 @@ const int stepsPerRev=200;
 Stepper myStepper(stepsPerRev, 24, 25, 26, 27); //setup on PA2-PA5
 // Clock
 uRTCLib rtc(0x68);
-char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
-char dateString[20] = {"1"};
+const int MAX_DATE_STRING_SIZE = 21; // Maximum size for a date stamp
+char dateString[MAX_DATE_STRING_SIZE];
+const int MAX_INT_TO_CHAR_ARRAY_BUFFER_SIZE = 2; // RTC library function calls return at max a 2 digit integer
+char intToCharArrayBuffer[MAX_INT_TO_CHAR_ARRAY_BUFFER_SIZE];
 // Fan
 double clk_period = 0.0000000625;
 unsigned int ticks= ((1.0/100.0)/2.0)/clk_period; //fan shouldn't go too fast, so 100Hz is good
@@ -87,15 +89,14 @@ void setup()
   // Fan
   set_pin_direction(portDDRB, 6, OUTPUT);
   write_to_pin(portB, 6, LOW); // Set this to high to run the fan
-  
+  // CLock
   URTCLIB_WIRE.begin();
 }
 void loop() 
 {
-  rtc.refresh();
-	myStepper.step(stepsPerRev);
-
-  delay(1000);
+	//myStepper.step(stepsPerRev);
+  Serial.println(getTime()); // Serial output is used only for testing purpose
+  delay(1000); // Delay is only for testing purpose
 
 	/*
   // unsigned int waterLevel = readSensor(); // This is turned off for now for testing but make sure to turn this back on when done
@@ -232,4 +233,61 @@ unsigned int readSensor() {
   // Whenever I read on an analog port that isn't A0 (such as A3) the lowest value for waterValue ends up being 7 instead of the epexected 0. This can proably be worked around but to fix I'd proably have to chnage something witha  register.
   write_to_pin(port_h, waterSensorPower, LOW); // Turn the sensor OFF
 	return waterValue;							// send current reading
+}
+// Takes an integer and converts it to a char array of that same integer. Relies on a global char array 'intToCharArrayBuffer'
+char* intToCharArray(int input)
+{
+  memset(&intToCharArrayBuffer[0], 0, sizeof(intToCharArrayBuffer));
+  sprintf(intToCharArrayBuffer, "%d", input);
+  return intToCharArrayBuffer;
+}
+
+// Returns a char array containing a time stamp containing the current time and date. Relies on a global char array 'dateString'
+char* getTime() {
+
+  rtc.refresh();
+  memset(&dateString[0], 0, sizeof(dateString)); // Clears dateString char array to flush out previous time stamp
+  
+  int hour12 = rtc.hour() % 12;
+  char tempString[6] = ""; // Temporary char array used to hold string literals required in assembling char array
+  if (hour12 == 0) { // Converts the hour to the 12-hour format
+    hour12 = 12; // 0 in the 24-hour format is 12 in the 12-hour format
+  }
+
+  // Assembles time information
+  strcpy(tempString, "("); 
+  strcat(dateString, tempString); // "("
+  strcat(dateString, intToCharArray(hour12)); // "(xx"
+  strcpy(tempString, ":");
+  strcat(dateString, tempString); // "(xx:"
+  if(rtc.minute() < 10) // Adds a leading 0 to the time if it's a one digit number
+  {
+    strcpy(tempString, "0");
+    strcat(dateString, tempString);
+  }
+  strcat(dateString, intToCharArray(rtc.minute())); // "(xx:xx"
+
+  // Determines whether the time should be displayed as AM or PM
+  if(rtc.hour() < 12)
+  {
+    strcpy(tempString, " AM, ");
+  }
+  else
+  {
+    strcpy(tempString, " PM, ");
+  }
+  strcat(dateString, tempString); // "(xx:xx (AM/PM), "
+
+  // Assemble date information
+  strcat(dateString, intToCharArray(rtc.month())); // "(xx:xx (AM/PM), xx"
+  strcpy(tempString, "/");
+  strcat(dateString, tempString); // "(xx:xx (AM/PM), xx/"
+  strcat(dateString, intToCharArray(rtc.day())); // "(xx:xx (AM/PM), xx/xx"
+  strcpy(tempString, "/");
+  strcat(dateString, tempString); // "(xx:xx (AM/PM), xx/xx/"
+  strcat(dateString, intToCharArray(rtc.year())); // "(xx:xx (AM/PM), xx/xx/xx"
+  strcpy(tempString, ")");
+  strcat(dateString, tempString); // "(xx:xx (AM/PM), xx/xx/xx)"
+
+  return dateString;
 }

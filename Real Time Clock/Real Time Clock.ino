@@ -40,7 +40,7 @@ char* getTime() {
   memset(&dateString[0], 0, sizeof(dateString)); // Clears dateString char array to flush out previous time stamp
   
   int hour12 = rtc.hour() % 12;
-  char tempString[5] = ""; // Temporary char array used to hold string literals required in assembling char array
+  char tempString[6] = ""; // Temporary char array used to hold string literals required in assembling char array
   if (hour12 == 0) { // Converts the hour to the 12-hour format
     hour12 = 12; // 0 in the 24-hour format is 12 in the 12-hour format
   }
