@@ -6,6 +6,9 @@ Team Members:
 - Tiffany Schoech
 
 The pertinent files for submission are:
-- Final_Project
+- Final_Project (Folder)
     - "Final_Project.ino" (The Code)
-- Video Submission (Video of the system in operation)
+- Photos and Videos (Folder)
+    - "Video Submission.mp4" (Video of the system in operation)
+    - Various photos of the swamp cooler
+- "Schematic_Diagram.png" (A schematic of the machine)
