@@ -4,6 +4,6 @@ Clock:
 - uRTCLib v6.6.0
 LCD Display
 - LiquidCrystal.h v1.0.7 (LiquidCrystal Library for Arduino)
-Temperature and Humidy Sensor:
+Temperature and Humidity Sensor:
 - DHT sensor library v1.4.4
 - Adafruit Unified Sensor Driver v1.1.6
