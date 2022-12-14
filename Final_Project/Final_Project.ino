@@ -79,15 +79,16 @@ unsigned int ticks= ((1.0/100.0)/2.0)/clk_period; //fan shouldn't go too fast, s
 unsigned long currentTicks=0; //global ticks counter
 unsigned int timer_running=1;
 
-unsigned int systemState = 0;
+unsigned int systemState = 2;
 // 0 = off
 // 1 = Idle
 // 2 = Runnng
 // 3 = Error
-unsigned int waterValue = 0; // Value for storing water level
-float tempThreshold = 75;
+unsigned int waterValue = 256; // Value for storing water level
+float tempThreshold = 70;
 unsigned int waterLevelThreshold = 100;
 boolean stateTransition = false;
+unsigned int temp = 0;
 
 void setup() 
 {
@@ -120,34 +121,41 @@ void setup()
 }
 void loop() 
 {
-  delay(1000);
-  lcd.clear();
-
+  delay(100);
   
-  if(Serial.parseInt()=='0') systemState = 0;
+
+  //temp = Serial.parseInt();
+  //if(temp) systemState = 0;
+  //if(temp) systemState = 1;
+  //if(temp) systemState = 2; // These two are mainly here for debugging purposes
+  //if(temp) systemState = 3; // These two are mainly here for debugging purposes
+  //Serial.println(systemState);
+  //Serial.println(temp);
+  
 
   if(!stateTransition)
   {
     Serial.print("State Changed to: ");
-    Serial.print(systemState);
+    Serial.println(systemState);
     Serial.println(getTime());
     stateTransition = true;
   }
 
   if(systemState == 0) // Off
   {
-    lcd.print("Error");
+    write_to_pin(portB, 6, LOW); // STOP the fan
+    
     write_to_pin(port_g, 2, HIGH);
     write_to_pin(port_g, 0, LOW);
     write_to_pin(port_g, 1, LOW);
     write_to_pin(port_l, 7, LOW);
-    if(Serial.parseInt()=='1'){
+    if(Serial.parseInt()==1){
       systemState = 1;  
       stateTransition = false;
     }
     //stateTransition = false;
   }
-  if(systemState == 1) // Idle
+  else if(systemState == 1) // Idle
   {
     //stateTransition = false;
     write_to_pin(port_g, 2, LOW);
@@ -158,14 +166,16 @@ void loop()
       systemState = 3; // Error
       stateTransition = false;
     }
+    Serial.println(dht.readTemperature(true));
     if(dht.readTemperature(true) > tempThreshold){
+      Serial.println("Hi");
       systemState == 2; // Running
       stateTransition = false;
     }
   }
-  if(systemState == 3) // Running
+  else if(systemState == 2) // Running
   {
-    
+    write_to_pin(portB, 6, HIGH); // Start the fan
     write_to_pin(port_g, 2, LOW);
     write_to_pin(port_g, 0, LOW);
     write_to_pin(port_g, 1, HIGH);
@@ -173,15 +183,18 @@ void loop()
     if(waterValue < waterLevelThreshold){
       systemState = 3; // Error
       stateTransition = false;
+      write_to_pin(portB, 6, LOW); // STOP the fan
     }
     if(dht.readTemperature(true) <= tempThreshold){
       systemState == 1; // Idle
       stateTransition = false;
+      write_to_pin(portB, 6, LOW); // STOP the fan
     }
   }
-  if(systemState == 4) // Error
+  else if(systemState == 3) // Error
   {
-    
+    lcd.clear();
+    lcd.print("Error");
     write_to_pin(port_g, 2, LOW);
     write_to_pin(port_g, 0, LOW);
     write_to_pin(port_g, 1, LOW);
@@ -189,6 +202,7 @@ void loop()
     if(waterValue > waterLevelThreshold)
     {
       stateTransition = false;
+            
     }
 
   }
@@ -202,11 +216,14 @@ void loop()
   //delay(1000); // Delay is only for testing purpose
 
 	
-  unsigned int waterLevel = readSensor(); // This is turned off for now for testing but make sure to turn this back on when done
+   // This is turned off for now for testing but make sure to turn this back on when done
+   unsigned int waterLevel = readSensor();
   //Serial.print("Water level: ");
 	//Serial.println(waterValue);
+  lcd.clear();
   if(systemState == 1 || systemState == 2)
   {
+    
     lcd.setCursor(0, 0);
     lcd.print("Hum: ");
     lcd.print(dht.readHumidity());
@@ -214,6 +231,7 @@ void loop()
     lcd.print("Temp: ");
     lcd.print(dht.readTemperature(true));
     lcd.print("F");
+    myStepper.step(stepsPerRev);
     delay(100);
   }
   
