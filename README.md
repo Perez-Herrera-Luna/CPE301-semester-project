@@ -13,3 +13,6 @@ The pertinent files for submission are:
     - Various photos of the swamp cooler
 - "Schematic_Diagram.png" (A schematic of the machine)
 - "Project Overview.pdf" (Document containg information about the project)
+
+
+Note: "Module Testing" contains seperate testing and experiemntation for the various modules befpre they were all brought together in "Final_Project.ino". These are not part of the submission.
