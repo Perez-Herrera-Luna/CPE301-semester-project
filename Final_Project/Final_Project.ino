@@ -1,4 +1,6 @@
 #include <LiquidCrystal.h> // For LCD Module
+#include <Stepper.h>
+#include <uRTCLib.h>
 // Holdovers from Labs, best not to touch
 #define RDA 0x80
 #define TBE 0x20
@@ -34,12 +36,32 @@ volatile unsigned int* my_ADC_DATA = (unsigned int*) 0x78;
 unsigned char* port_h = (unsigned char*) 0x102; // Port H Data Register
 unsigned char* ddr_h  = (unsigned char*) 0x101; // Port H Data Direction Register
 unsigned char* pin_h  = (unsigned char*) 0x100; // Port H Input Pins Address
+// Port F pointers
+volatile unsigned char *portF     = (unsigned char*) 0x31;
+unsigned char *portDDRF  = (unsigned char*) 0x30;
+volatile unsigned char* pinF      = (unsigned char*) 0x2F; //ccw adjuster
+// Port K pointers
+volatile unsigned char *portK     = (unsigned char*) 0x107;
+unsigned char *portDDRK  = (unsigned char*) 0x108;
+volatile unsigned char *pinK      = (unsigned char*) 0x106; //cw adjuster
 
 //Initialize Modules
+// LCD
 const int rs = 48, en = 49, d4 = 50, d5 = 51, d6 = 52, d7 = 53;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7); // Initialize the library with the neccessary pins
+// Stepper
+const int stepsPerRev=200;
+Stepper myStepper(stepsPerRev, 24, 25, 26, 27); //setup on PA2-PA5
+// Clock
+uRTCLib rtc(0x68);
+char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+char dateString[20] = {"1"};
+// Fan
+double clk_period = 0.0000000625;
+unsigned int ticks= ((1.0/100.0)/2.0)/clk_period; //fan shouldn't go too fast, so 100Hz is good
+unsigned long currentTicks=0; //global ticks counter
+unsigned int timer_running=1;
 
-// Our 'Global' Varibales
 unsigned int systemState = 0;
 // 0 = off
 // 1 = Running
@@ -50,20 +72,31 @@ unsigned int waterValue = 0; // Value for storing water level
 
 void setup() 
 {
+  U0init(9600); // initialize the serial port on USART0:
+  delay(3000);
+  myStepper.setSpeed(60);
+  set_pin_direction(portDDRF, 0, INPUT);
+  set_pin_direction(portDDRK, 0, INPUT);
+  // LCD Setup
   lcd.begin(16, 2); // This line is neccessary, do not change
-  // This can be changed
-  //lcd.print("testing");
+  lcd.print("testing"); // This can be changed
   // Water Level Sensor setup
   set_pin_direction(ddr_h, waterSensorPower, OUTPUT); // Set H4 as an OUTPUT
   write_to_pin(port_h, waterSensorPower, LOW); // Set to LOW so no power flows through the sensor
   adc_init(); // setup the ADC
+  // Fan
+  set_pin_direction(portDDRB, 6, OUTPUT);
+  write_to_pin(portB, 6, LOW); // Set this to high to run the fan
   
-  U0init(9600); // initialize the serial port on USART0:
+  URTCLIB_WIRE.begin();
 }
 void loop() 
 {
-	
-  
+  rtc.refresh();
+	myStepper.step(stepsPerRev);
+
+  delay(1000);
+
 	/*
   // unsigned int waterLevel = readSensor(); // This is turned off for now for testing but make sure to turn this back on when done
   //Serial.print("Water level: ");
@@ -144,9 +177,7 @@ void write_to_pin(unsigned char* data_register, unsigned char pin_num, uint8_t s
   if(state == LOW) *data_register &= ~(0x01 << pin_num);
   else if(state == HIGH) *data_register |= 0x01 << pin_num;
 }
-/*
-* Function that gets a reading from the water level sensor
-*/
+
 
 // ADC Functions
 void adc_init()
@@ -165,6 +196,7 @@ void adc_init()
   *my_ADMUX  &= 0b11011111; // clear bit 5 to 0 for right adjust result                        0010 0000
   *my_ADMUX  &= 0b11100000; // clear bit 4-0 to 0 to reset the channel and gain bits           0001 1111
 }
+
 unsigned int adc_read(unsigned char adc_channel_num)
 {
   // clear the channel selection bits (MUX 4:0)                                               0001 1111
@@ -189,7 +221,9 @@ unsigned int adc_read(unsigned char adc_channel_num)
   return *my_ADC_DATA;
 }
 
-// Water Level Function
+/*
+* Function that gets a reading from the water level sensor
+*/
 unsigned int readSensor() {
   write_to_pin(port_h, waterSensorPower, HIGH); // Turn the sensor ON
 	delay(10);							// wait 10 milliseconds
