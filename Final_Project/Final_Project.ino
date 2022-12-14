@@ -1,6 +1,9 @@
 #include <LiquidCrystal.h> // For LCD Module
-#include <Stepper.h>
-#include <uRTCLib.h>
+#include <Stepper.h> // For Stepper Motor
+#include <uRTCLib.h> // For Real Time Clock Module
+#include <Adafruit_Sensor.h> // Dependency for Temperature and Humidity Sensor Library
+#include <DHT.h> // For Temperature and Humidity Sensor
+#include <DHT_U.h> // For Temperature and Humidity Sensor
 // Holdovers from Labs, best not to touch
 #define RDA 0x80
 #define TBE 0x20
@@ -44,6 +47,14 @@ volatile unsigned char* pinF      = (unsigned char*) 0x2F; //ccw adjuster
 volatile unsigned char *portK     = (unsigned char*) 0x107;
 unsigned char *portDDRK  = (unsigned char*) 0x108;
 volatile unsigned char *pinK      = (unsigned char*) 0x106; //cw adjuster
+// Port L Register Pointers
+unsigned char* port_l = (unsigned char*) 0x10B; // Port L Data Register
+unsigned char* ddr_l  = (unsigned char*) 0x10A; // Port L Data Direction Register
+unsigned char* pin_l  = (unsigned char*) 0x109; // Port L Input Pins Address
+// Port G Register Pointers
+unsigned char* port_g = (unsigned char*) 0x34; // Port G Data Register
+unsigned char* ddr_g  = (unsigned char*) 0x33; // Port G Data Direction Register
+unsigned char* pin_g  = (unsigned char*) 0x32; // Port G Input Pins Address
 
 //Initialize Modules
 // LCD
@@ -58,6 +69,10 @@ const int MAX_DATE_STRING_SIZE = 21; // Maximum size for a date stamp
 char dateString[MAX_DATE_STRING_SIZE];
 const int MAX_INT_TO_CHAR_ARRAY_BUFFER_SIZE = 2; // RTC library function calls return at max a 2 digit integer
 char intToCharArrayBuffer[MAX_INT_TO_CHAR_ARRAY_BUFFER_SIZE];
+// Temperature and Humidity Sensor
+#define DHTPIN 14
+#define DHTTYPE DHT11
+DHT dht(DHTPIN, DHTTYPE);
 // Fan
 double clk_period = 0.0000000625;
 unsigned int ticks= ((1.0/100.0)/2.0)/clk_period; //fan shouldn't go too fast, so 100Hz is good
@@ -66,11 +81,13 @@ unsigned int timer_running=1;
 
 unsigned int systemState = 0;
 // 0 = off
-// 1 = Running
-// 2 = Idle
-// 3 = Disabled
-// 4 = Error
+// 1 = Idle
+// 2 = Runnng
+// 3 = Error
 unsigned int waterValue = 0; // Value for storing water level
+float tempThreshold = 75f;
+unsigned int waterLevelThreshold = 100;
+boolean stateTransition = false;
 
 void setup() 
 {
@@ -91,18 +108,67 @@ void setup()
   write_to_pin(portB, 6, LOW); // Set this to high to run the fan
   // CLock
   URTCLIB_WIRE.begin();
+  // Humidity and Temperature Sensor
+  dht.begin();
+
+  
+  set_pin_direction(ddr_g, 2, OUTPUT); // Set H4 as an OUTPUT
+  set_pin_direction(ddr_l, 5, OUTPUT);
+  set_pin_direction(ddr_l, 6, OUTPUT);
+  set_pin_direction(ddr_l, 7, OUTPUT);
+  write_to_pin(port_g, 2, HIGH); // Set to LOW so no power flows through the sensor
 }
 void loop() 
 {
-	//myStepper.step(stepsPerRev);
-  Serial.println(getTime()); // Serial output is used only for testing purpose
-  delay(1000); // Delay is only for testing purpose
+  delay(1000);
 
-	/*
-  // unsigned int waterLevel = readSensor(); // This is turned off for now for testing but make sure to turn this back on when done
+  if(Serial.parseInt()=='1') systemState = 1;
+  if(Serial.parseInt()=='0') systemState = 0;
+
+  if(!stateTransition)
+  {
+    Serial.print("State Changed to: ");
+    Serial.print(systemState);
+    Serial.println(getTime());
+    stateTransition = True;
+  }
+
+  if(systemState == 1)
+  {
+    stateTransition = false;
+    if(waterLevel < waterLevelThreshold) systemState = 3; // Error
+    if(dht.readTemperature(true) > tempThreshold) systemState == 2; // Running
+  }
+  if(systemState == 3) // Running
+  {
+    stateTransition = false;
+    if(waterLevel < waterLevelThreshold) systemState = 3; // Error
+    if(dht.readTemperature(true) <= tempThreshold) systemState == 1; // Idle
+  }
+  if(systemState == 4) // Error
+  {
+    stateTransition = false;
+    write_to_pin(port_l, 7, HIGH);
+    if(waterValue > waterLevelThreshold)
+    {
+
+    }
+
+  }
+	//myStepper.step(-stepsPerRev);
+  //Serial.println(getTime()); // Serial output is used only for testing purpose
+  //Serial.print(" Humidity: ");
+  //Serial.print(dht.readHumidity());
+  //Serial.print("%  Temperature: ");
+  //Serial.print(dht.readTemperature(true));
+  //Serial.println("F");
+  //delay(1000); // Delay is only for testing purpose
+
+	
+  unsigned int waterLevel = readSensor(); // This is turned off for now for testing but make sure to turn this back on when done
   //Serial.print("Water level: ");
 	//Serial.println(waterValue);
-
+  /*
   lcd.print("testing");
   lcd.setCursor(0, 1); // set the cursor to column 0, line 1
   lcd.print("WL: ");
@@ -228,7 +294,8 @@ unsigned int adc_read(unsigned char adc_channel_num)
 unsigned int readSensor() {
   write_to_pin(port_h, waterSensorPower, HIGH); // Turn the sensor ON
 	delay(10);							// wait 10 milliseconds
-  waterValue = adc_read(3); // Read the analog value form sensor
+  //waterValue = adc_read(3); // Read the analog value form sensor
+  waterValue = analogRead(3);
   // 3 should probably be replaced with waterSensorPin but not neccessary
   // Whenever I read on an analog port that isn't A0 (such as A3) the lowest value for waterValue ends up being 7 instead of the epexected 0. This can proably be worked around but to fix I'd proably have to chnage something witha  register.
   write_to_pin(port_h, waterSensorPower, LOW); // Turn the sensor OFF
