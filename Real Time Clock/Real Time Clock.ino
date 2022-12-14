@@ -25,7 +25,7 @@ void loop() {
   delay(1000); // Delay is only for testing purpose
 }
 
-// Takes an integer and converts it to a char array of that same integer. Relies on a global chara array 'intToCharArrayBuffer'
+// Takes an integer and converts it to a char array of that same integer. Relies on a global char array 'intToCharArrayBuffer'
 char* intToCharArray(int input)
 {
   memset(&intToCharArrayBuffer[0], 0, sizeof(intToCharArrayBuffer));
