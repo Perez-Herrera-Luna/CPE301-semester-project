@@ -21,3 +21,5 @@ PD7 - Pin50
 PB2 - Pin51
 PG1 - Pin52
 PB0 - Pin53
+Temperature and Humidity Sensor Pins:
+TX3 - Pin14
